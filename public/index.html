@@ -1,0 +1,51 @@
+<script>
+let startTime = null;
+let running = false;
+const goal = 23;
+const info = document.getElementById("info");
+
+async function loadScores() {
+    const res = await fetch("/scores");
+    const scores = await res.json();
+
+    let html = "<h2>Highscore</h2>";
+    scores.forEach((s, i) => {
+        html += `${i + 1}. ${s.name} – ${s.difference.toFixed(2)} sek<br>`;
+    });
+
+    info.innerHTML += "<br><br>" + html;
+}
+
+document.addEventListener("keydown", async function(e) {
+    if (e.code === "Space") {
+        if (!running) {
+            startTime = Date.now();
+            running = true;
+            info.textContent = "Tidtaker startet...";
+        } else {
+            let endTime = Date.now();
+            let seconds = (endTime - startTime) / 1000;
+            let difference = Math.abs(seconds - goal);
+
+            let name = prompt("Skriv navnet ditt:");
+
+            await fetch("/scores", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ name, difference })
+            });
+
+            info.innerHTML = `
+                Du stoppet på ${seconds.toFixed(2)} sekunder.<br>
+                Avvik: ${difference.toFixed(2)} sekunder.<br><br>
+                Trykk SPACE for å spille igjen
+            `;
+
+            running = false;
+            loadScores();
+        }
+    }
+});
+
+loadScores();
+</script>
